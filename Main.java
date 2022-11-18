@@ -14,11 +14,11 @@ public class Main implements Solver {
         int low = -m;
         int high = m;
 
-        String s = "";
+        //String s = "";
         for (int i = 0; i < size; i ++) {
             for (int j = 0; j < size; j++) {
                 testGrid[i][j] = r.nextInt(high-low) + low;
-                s += " " + testGrid[i][j];
+                //s += " " + testGrid[i][j];
             }
             //System.out.println(s);
             //s = "";
@@ -39,11 +39,11 @@ public class Main implements Solver {
         int low = -m;
         int high = m;
 
-        String s = "";
+        //String s = "";
         for (int i = 0; i < size; i ++) {
             for (int j = 0; j < size; j++) {
                 grid[i][j] = r.nextInt(high-low) + low;
-                s += " " + grid[i][j];
+                //s += " " + grid[i][j];
             }
             //System.out.println(s);
             //s = "";
@@ -92,31 +92,15 @@ public class Main implements Solver {
         int lowest_value = Integer.MAX_VALUE;
         int subgrid_value = 0;
         for (int subgrid_size = 1; subgrid_size - 1 < size; subgrid_size++) {
-            for (int i = 0; i < size; i++) {
-                for (int j = 0; j < size; j ++) {
-                    // Need to check if out of bounds
-                    // subgrid_value = matrix[i][j];
-
-                    // Messy if statements, just to test
-                    
-                    /*if (subgrid_size == 1) {
-                        subgrid_value = matrix[i][j];
-                    }
-                    if (subgrid_size == 2) {
-                        if (i + subgrid_size + 1 < size && j + subgrid_size + 1 < size) {
-                            subgrid_value = matrix[i][j] + matrix[i + 1][j] + matrix[i][j + 1] + matrix[i + 1][j + 1];
-                        }
-                    }*/
+            for (int i = 0; i + subgrid_size - 1 < size; i++) {
+                for (int j = 0; j + subgrid_size - 1 < size; j ++) {
 
                     // Make a subgrid method that creates a subgrid from input of row and col start and steps
                     // Then summarise that subgrid with the sum method
                     // Then compare the subgrid_value to the lowest_value
 
-                    // Check this tomorrow
-                    if (i + subgrid_size - 1 < size && j + subgrid_size - 1 < size) {
-                        int[][] subgrid = subgrid(matrix, i, j, subgrid_size);
-                        subgrid_value = sum(subgrid, subgrid_size);
-                    }
+                    int[][] subgrid = subgrid(matrix, i, j, subgrid_size);
+                    subgrid_value = sum(subgrid, subgrid_size);
 
                     if (subgrid_value < lowest_value) {
                         values[0] = i;
