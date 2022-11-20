@@ -29,34 +29,41 @@ public class Main implements Solver {
 
     @Override
     public List<Square> solve(int[][] matrix, int m) {
-        List<Square> list = new ArrayList<Square>();
-        int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
-        int[][] grid = matrix;
-        int size = grid.length;
+        List<Square> list_1 = new ArrayList<Square>();
+        List<Square> list_2 = new ArrayList<Square>();
+        int[] values_1 = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
+        int[] values_2 = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
+        int[][] grid_1 = copy(matrix);
+        int[][] grid_2 = copy(matrix);
+        int size = matrix.length;
         
-        // Original grid
-        System.out.println("Sum of squares: " + sum(grid, size));
-        print(grid, size);
+        // 4 flips
+        for (int flip = 1; flip < 5; flip++) {
+            values_1 = solve_max(grid_1, size);
+            flip(grid_1, values_1[0], values_1[1], values_1[2]);
+            list_1.add(new Square(values_1[0], values_1[1], values_1[2]));
 
-        // Flips
-        for (int i = 0; i < 5; i++) {
-            values = solve2(grid, size);
-            flip(grid, values[0], values[1], values[2]);
-            System.out.println("Sum of squares: " + sum(grid, size));
-            print(grid, size);
-
-            // Add values to the list
-            list.add(new Square(values[0], values[1], values[2]));
-
-            // Print values of the square
-            System.out.println("Row: " + list.get(i).getRow());
-            System.out.println("Col: " + list.get(i).getCol());
-            System.out.println("Size: " + list.get(i).getSize());
+            values_2 = solve_min(grid_2, size);
+            flip(grid_2, values_2[0], values_2[1], values_2[2]);
+            list_2.add(new Square(values_2[0], values_2[1], values_2[2]));
         }
-        return list;
+
+        // Last flip
+        values_1 = solve_max(grid_1, size);
+        values_2 = solve_max(grid_2, size);
+        flip(grid_1, values_1[0], values_1[1], values_1[2]);
+        flip(grid_2, values_2[0], values_2[1], values_2[2]);
+
+        if (sum(grid_1, size) >= sum(grid_2, size)) {
+            list_1.add(new Square(values_1[0], values_1[1], values_1[2]));
+            return list_1;
+        } else {
+            list_2.add(new Square(values_2[0], values_2[1], values_2[2]));
+            return list_2;
+        }
     }
 
-    private int[] solve2(int[][] matrix, int size) {
+    private int[] solve_max(int[][] matrix, int size) {
         int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
         
         int lowest_value = Integer.MAX_VALUE;
@@ -73,6 +80,30 @@ public class Main implements Solver {
                         values[1] = j;
                         values[2] = subgrid_size;
                         lowest_value = subgrid_value;
+                    }
+                }
+            }
+        }
+        return values;
+    }
+
+    private int[] solve_min(int[][] matrix, int size) {
+        int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
+        
+        int highest_value = Integer.MIN_VALUE;
+        int subgrid_value = 0;
+        for (int subgrid_size = 1; subgrid_size - 1 < size; subgrid_size++) {
+            for (int i = 0; i + subgrid_size - 1 < size; i++) {
+                for (int j = 0; j + subgrid_size - 1 < size; j ++) {
+
+                    int[][] subgrid = subgrid(matrix, i, j, subgrid_size);
+                    subgrid_value = sum(subgrid, subgrid_size);
+
+                    if (subgrid_value > highest_value) {
+                        values[0] = i;
+                        values[1] = j;
+                        values[2] = subgrid_size;
+                        highest_value = subgrid_value;
                     }
                 }
             }
@@ -99,6 +130,21 @@ public class Main implements Solver {
         return grid;
     }
 
+    private int[][] copy(int[][] src) {
+        if (src == null) {
+            return null;
+        }
+ 
+        int[][] copy = new int[src.length][];
+ 
+        for (int i = 0; i < src.length; i++) {
+            copy[i] = new int[src[i].length];
+            System.arraycopy(src[i], 0, copy[i], 0, src[i].length);
+        }
+ 
+        return copy;
+    }
+
     public void flip(int[][] grid, int fromRow, int fromCol, int steps) {
         for (int i = fromRow; i < fromRow + steps; i++) {
             for (int j = fromCol; j < fromCol + steps; j++) {
@@ -119,29 +165,6 @@ public class Main implements Solver {
         System.out.println("");
     }
 
-    public List<Square> solved(int[][] matrix, int m) {
-        List<Square> list = new ArrayList<Square>();
-        int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
-        int[][] grid = matrix;
-        
-        // Original grid
-        System.out.println("Sum of squares: " + sum(grid, m));
-        print(grid, m);
-
-        // Flips
-        for (int i = 0; i < 5; i++) {
-            values = solve2(grid, m);
-            flip(grid, values[0], values[1], values[2]);
-            System.out.println("Sum of squares: " + sum(grid, m));
-            print(grid, m);
-
-            // Add values to the list
-            list.add(new Square(values[0], values[1], values[2]));
-        }
-
-        return list;
-    }
-
     public int[] solve_rec(int[][] matrix, int size) {
         int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
         int highest_value = Integer.MIN_VALUE;
@@ -155,29 +178,30 @@ public class Main implements Solver {
                         values[1] = j;
                         values[2] = subgrid_size;
                         highest_value = sum;
+                        print(matrix, size);
+                        System.out.println("Sum: " + sum);
                     }
                 }
             }
         }
-        System.out.println(highest_value);
+        //System.out.println(highest_value);
         return values;
     }
 
     private int solve_rec_pr(int[][] matrix, int size, int fromRow, int fromCol, int steps, int flip) {
         if (flip == 0) {
-            print(matrix, size);
             return sum(matrix, size);
         } else {
             for (int subgrid_size = 1; subgrid_size - 1 < size; subgrid_size++) {
                 for (int i = 0; i + subgrid_size - 1 < size; i++) {
                     for (int j = 0; j + subgrid_size - 1 < size; j++) {
-                        flip(matrix, i, j, subgrid_size);
-                        return solve_rec_pr(matrix, size, i, j, subgrid_size, flip - 1);
+                        flip(matrix, fromRow, fromCol, subgrid_size);
+                        return solve_rec_pr(matrix, size, fromRow, fromCol, steps, flip - 1);
                     }
                 }
             }
         }
-        return 0; // Should not be 0, but don't know what to return here yet
+        return sum(matrix, size); // Should not be 0, but don't know what to return here yet
     }
 
     public int sum(int[][] matrix, int size) {
@@ -272,7 +296,7 @@ public class Main implements Solver {
 
     public static void main(String[] args) {
         Main main = new Main();
-        int size = 4;
+        int size = 25;
         int m = 10;
         List<Square> list = new ArrayList<Square>();
 
@@ -293,20 +317,12 @@ public class Main implements Solver {
             { -1 , -3 , -7 , -9 , -2}
             };
 
-        //list = main.solve(test1, 100);
+        list = main.solve(grid, m);
 
-        main.solve(test1, 4);
-
-        /*// Original grid
-        System.out.println("Sum of squares: " + main.sum(test1, size));
-        main.print(test1, size);
-
-        // Flips
-        for (int i = 0; i < 5; i++) {
-            values = main.solve2(test1, size);
-            main.flip(test1, values[0], values[1], values[2]);
-            System.out.println("Sum of squares: " + main.sum(test1, size));
-            main.print(test1, size);
-        }*/
+        list.forEach(l ->{
+            System.out.println("Row: " + l.getRow());
+            System.out.println("Col: " + l.getCol());
+            System.out.println("Size: " + l.getSize());
+        });
     }
 }
