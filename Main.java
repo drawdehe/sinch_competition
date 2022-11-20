@@ -30,7 +30,54 @@ public class Main implements Solver {
     @Override
     public List<Square> solve(int[][] matrix, int m) {
         List<Square> list = new ArrayList<Square>();
+        int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
+        int[][] grid = matrix;
+        int size = grid.length;
+        
+        // Original grid
+        System.out.println("Sum of squares: " + sum(grid, size));
+        print(grid, size);
+
+        // Flips
+        for (int i = 0; i < 5; i++) {
+            values = solve2(grid, size);
+            flip(grid, values[0], values[1], values[2]);
+            System.out.println("Sum of squares: " + sum(grid, size));
+            print(grid, size);
+
+            // Add values to the list
+            list.add(new Square(values[0], values[1], values[2]));
+
+            // Print values of the square
+            System.out.println("Row: " + list.get(i).getRow());
+            System.out.println("Col: " + list.get(i).getCol());
+            System.out.println("Size: " + list.get(i).getSize());
+        }
         return list;
+    }
+
+    private int[] solve2(int[][] matrix, int size) {
+        int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
+        
+        int lowest_value = Integer.MAX_VALUE;
+        int subgrid_value = 0;
+        for (int subgrid_size = 1; subgrid_size - 1 < size; subgrid_size++) {
+            for (int i = 0; i + subgrid_size - 1 < size; i++) {
+                for (int j = 0; j + subgrid_size - 1 < size; j ++) {
+
+                    int[][] subgrid = subgrid(matrix, i, j, subgrid_size);
+                    subgrid_value = sum(subgrid, subgrid_size);
+
+                    if (subgrid_value < lowest_value) {
+                        values[0] = i;
+                        values[1] = j;
+                        values[2] = subgrid_size;
+                        lowest_value = subgrid_value;
+                    }
+                }
+            }
+        }
+        return values;
     }
 
     public int[][] createGrid(int size, int m) {
@@ -72,46 +119,65 @@ public class Main implements Solver {
         System.out.println("");
     }
 
-    public int[] values(int[][] matrix, int size) {
-        int[] values = new int[2]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
-        values[0] = 1;
-        values[1] = 2;
-        values[2] = 3;
-        return values;
+    public List<Square> solved(int[][] matrix, int m) {
+        List<Square> list = new ArrayList<Square>();
+        int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
+        int[][] grid = matrix;
+        
+        // Original grid
+        System.out.println("Sum of squares: " + sum(grid, m));
+        print(grid, m);
+
+        // Flips
+        for (int i = 0; i < 5; i++) {
+            values = solve2(grid, m);
+            flip(grid, values[0], values[1], values[2]);
+            System.out.println("Sum of squares: " + sum(grid, m));
+            print(grid, m);
+
+            // Add values to the list
+            list.add(new Square(values[0], values[1], values[2]));
+        }
+
+        return list;
     }
 
-    public int[] solve2(int[][] matrix, int size) {
+    public int[] solve_rec(int[][] matrix, int size) {
         int[] values = new int[3]; // element 0 = fromRow, element 1 = fromCol, element 3 = steps.
-
-        // Check all subgrids recursively
-        // Add all the numbers in the subgrid
-        // Check which subgrid has the lowest summation
-        // Store the fromRow, fromCol and steps in values
-        // Return the values (then flip it)
-        
-        int lowest_value = Integer.MAX_VALUE;
-        int subgrid_value = 0;
+        int highest_value = Integer.MIN_VALUE;
+        int sum = 0;
         for (int subgrid_size = 1; subgrid_size - 1 < size; subgrid_size++) {
             for (int i = 0; i + subgrid_size - 1 < size; i++) {
                 for (int j = 0; j + subgrid_size - 1 < size; j ++) {
-
-                    // Make a subgrid method that creates a subgrid from input of row and col start and steps
-                    // Then summarise that subgrid with the sum method
-                    // Then compare the subgrid_value to the lowest_value
-
-                    int[][] subgrid = subgrid(matrix, i, j, subgrid_size);
-                    subgrid_value = sum(subgrid, subgrid_size);
-
-                    if (subgrid_value < lowest_value) {
+                    sum = solve_rec_pr(matrix, size, i, j, subgrid_size, 5);
+                    if (sum > highest_value) {
                         values[0] = i;
                         values[1] = j;
                         values[2] = subgrid_size;
-                        lowest_value = subgrid_value;
+                        highest_value = sum;
                     }
                 }
             }
         }
+        System.out.println(highest_value);
         return values;
+    }
+
+    private int solve_rec_pr(int[][] matrix, int size, int fromRow, int fromCol, int steps, int flip) {
+        if (flip == 0) {
+            print(matrix, size);
+            return sum(matrix, size);
+        } else {
+            for (int subgrid_size = 1; subgrid_size - 1 < size; subgrid_size++) {
+                for (int i = 0; i + subgrid_size - 1 < size; i++) {
+                    for (int j = 0; j + subgrid_size - 1 < size; j++) {
+                        flip(matrix, i, j, subgrid_size);
+                        return solve_rec_pr(matrix, size, i, j, subgrid_size, flip - 1);
+                    }
+                }
+            }
+        }
+        return 0; // Should not be 0, but don't know what to return here yet
     }
 
     public int sum(int[][] matrix, int size) {
@@ -134,20 +200,91 @@ public class Main implements Solver {
         return subgrid;
     }
 
+    // Hannes kod
+    /*
+    public int[] solve_rec2(int[][] matrix, int size) { //(int[][] matrix, ) {
+        List<Square> bestFlips = new ArrayList<Square>();
+        int currBestScore = 0;
+        int minFlips = 6;
+
+        for (int sz = 1; sz < size + 1; sz++) {
+            int sz_bound = (size - sz) + 1;
+            for(int i = 0; i < sz_bound; i++) {
+                for(int j = 0; j < sz_bound; j++) {
+                    List<Square> currentFlips = new ArrayList<Square>();
+                    Square s = new Square(i, j, sz);
+                    currentFlips.add(s);
+
+                    List<Square> completeFlips = solve_rec2(currentFlips);
+                    int evalScore = evalFlips(completeFlips);
+
+                    
+                    if(evalScore == this.maxScore) {
+                        return completeFlips;
+                    }
+
+                    if(evalScore >= currBestScore && completeFlips.size() < minFlips) {
+                        currBestScore = evalScore;
+                        bestFlips = completeFlips; //new ArrayList<Square>(completeFlips);
+                    }
+                }
+            }
+        }
+        return bestFlips;
+    }
+
+    private List<Square> solve_rec2(List<Square> tempL) {
+        if(tempL.size() == 5 || isMatrixPos(tempL)) {
+            return tempL;
+        }
+
+        List<Square> bestFlips = new ArrayList<Square>();
+        int currBestScore = 0;
+        int minFlips = 6;
+
+        for (int sz = 1; sz < matrix_size + 1; sz++) {
+            int sz_bound = (matrix_size - sz) + 1;
+            for(int i = 0; i < sz_bound; i++) {
+                for(int j = 0; j < sz_bound; j++) {
+                    List<Square> currentFlips = new ArrayList<Square>(tempL);
+                    Square s = new Square(i, j, sz);
+
+                    currentFlips.add(s);
+
+                    List<Square> completeFlips = solve_rec2(currentFlips);
+                    
+                    int evalScore = evalFlips(completeFlips);
+
+                    
+                    if(evalScore == this.maxScore) {
+                        return completeFlips; //new ArrayList<Square>(completeFlips);
+                    }
+
+                    if(evalScore >= currBestScore && completeFlips.size() < minFlips) {
+                        currBestScore = evalScore;
+                        bestFlips = completeFlips; //new ArrayList<Square>(completeFlips);
+                    }
+                }
+            }
+        }
+        return bestFlips;
+    }*/
+
     public static void main(String[] args) {
         Main main = new Main();
-        int size = 25;
+        int size = 4;
         int m = 10;
-        int[][] grid = main.createGrid(size, m);
-        int[] values = new int[3];
+        List<Square> list = new ArrayList<Square>();
 
+        // Grids to test
+
+        int[][] grid = main.createGrid(size, m);
         int [][] test1 = {
             { 6, 2 , -1 , 5} ,
             { 4 , -5 , -7 , 3} ,
             { -3 , 0, 2 , -4} ,
             { -1 , 3 ,10 , -6}
             };
-
         int [][] test2 = {
             { -4 , -4 , -8 , -7 , -3} ,
             { -3 , 4, 7, 3 , -8} ,
@@ -156,16 +293,20 @@ public class Main implements Solver {
             { -1 , -3 , -7 , -9 , -2}
             };
 
-        // Original grid
-        System.out.println("Sum of squares: " + main.sum(grid, size));
-        main.print(grid, size);
+        //list = main.solve(test1, 100);
+
+        main.solve(test1, 4);
+
+        /*// Original grid
+        System.out.println("Sum of squares: " + main.sum(test1, size));
+        main.print(test1, size);
 
         // Flips
         for (int i = 0; i < 5; i++) {
-            values = main.solve2(grid, size);
-            main.flip(grid, values[0], values[1], values[2]);
-            System.out.println("Sum of squares: " + main.sum(grid, size));
-            main.print(grid, size);
-        }
+            values = main.solve2(test1, size);
+            main.flip(test1, values[0], values[1], values[2]);
+            System.out.println("Sum of squares: " + main.sum(test1, size));
+            main.print(test1, size);
+        }*/
     }
 }
